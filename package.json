@@ -1,0 +1,12 @@
+{
+  "name": "online-shop-uts",
+  "version": "1.0.0",
+  "description": "Online Shop UTS - Pemrograman Web 2",
+  "scripts": {
+    "build": "tailwindcss -i ./css/style.css -o ./css/output.css",
+    "watch": "tailwindcss -i ./css/style.css -o ./css/output.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}
