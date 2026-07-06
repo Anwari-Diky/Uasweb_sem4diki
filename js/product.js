@@ -42,11 +42,7 @@ export class ProductManager {
 
     const stars = this._renderStars(product.rating || 0);
 
-    // Fallback for broken images from ephemeral Railway storage
     let imageUrl = product.gambar;
-    if (imageUrl && (imageUrl.includes('specs-backend-production') || imageUrl.includes('unsplash'))) {
-      imageUrl = 'https://placehold.co/400x400?text=Gambar+Produk';
-    }
 
     card.innerHTML = `
       <div class="relative overflow-hidden">

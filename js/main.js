@@ -2,7 +2,7 @@
 import { AuthManager } from './auth.js';
 import { ThemeManager } from './theme.js';
 import { Toast } from './toast.js';
-import { ProductManager } from './product.js?v=2';
+import { ProductManager } from './product.js?v=3';
 import { CartManager } from './cart.js';
 import { WishlistManager } from './wishlist.js';
 import { SearchFilter } from './search.js';
