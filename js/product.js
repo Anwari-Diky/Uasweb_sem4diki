@@ -42,11 +42,17 @@ export class ProductManager {
 
     const stars = this._renderStars(product.rating || 0);
 
+    // Fallback for broken images from ephemeral Railway storage or mixed content localhost
+    let imageUrl = product.gambar;
+    if (imageUrl && (imageUrl.includes('localhost') || imageUrl.includes('specs-backend-production'))) {
+      imageUrl = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=400';
+    }
+
     card.innerHTML = `
       <div class="relative overflow-hidden">
         <a href="index.html?product=${product.id}" class="block">
           <img
-            src="${product.gambar}"
+            src="${imageUrl}"
             alt="${product.nama}"
             class="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-300"
             onerror="this.src='https://placehold.co/400x400?text=No+Image'"
