@@ -44,8 +44,8 @@ export class ProductManager {
 
     // Fallback for broken images from ephemeral Railway storage or mixed content localhost
     let imageUrl = product.gambar;
-    if (imageUrl && (imageUrl.includes('localhost') || imageUrl.includes('specs-backend-production'))) {
-      imageUrl = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=400';
+    if (imageUrl && (imageUrl.includes('localhost') || imageUrl.includes('specs-backend-production') || imageUrl.includes('unsplash'))) {
+      imageUrl = 'https://placehold.co/400x400?text=Gambar+Produk';
     }
 
     card.innerHTML = `
