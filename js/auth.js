@@ -1,24 +1,9 @@
 // js/auth.js
 import { StateManager } from './state.js';
+import { API } from './api.js';
 
 export class AuthManager {
-  static _seedAdmin() {
-    const users = StateManager.get(StateManager.KEYS.USERS, []);
-    const adminExists = users.some(u => u.email === 'admin@shop.com');
-    if (!adminExists) {
-      users.push({
-        id: 'user_admin',
-        nama: 'Administrator',
-        email: 'admin@shop.com',
-        password: 'admin123',
-        role: 'admin',
-        createdAt: new Date().toISOString(),
-      });
-      StateManager.set(StateManager.KEYS.USERS, users);
-    }
-  }
-
-  static register(nama, email, password) {
+  static async register(nama, email, password) {
     const errors = {};
 
     if (!nama || nama.trim().length < 2) {
@@ -35,45 +20,22 @@ export class AuthManager {
       return { success: false, errors };
     }
 
-    const users = StateManager.get(StateManager.KEYS.USERS, []);
-    const emailExists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
-    if (emailExists) {
-      return { success: false, errors: { email: 'Email sudah terdaftar' } };
+    try {
+      const response = await API.post('/auth/register', { nama, email, password });
+      return { success: true, message: response.message };
+    } catch (error) {
+      return { success: false, errors: { email: error.message } };
     }
-
-    const newUser = {
-      id: `user_${Date.now()}`,
-      nama: nama.trim(),
-      email: email.toLowerCase().trim(),
-      password,
-      role: 'user',
-      createdAt: new Date().toISOString(),
-    };
-
-    users.push(newUser);
-    StateManager.set(StateManager.KEYS.USERS, users);
-    return { success: true, message: 'Registrasi berhasil' };
   }
 
-  static login(email, password) {
-    const users = StateManager.get(StateManager.KEYS.USERS, []);
-    const user = users.find(
-      u => u.email.toLowerCase() === email.toLowerCase().trim() && u.password === password
-    );
-
-    if (!user) {
-      return { success: false, message: 'Email atau password salah' };
+  static async login(email, password) {
+    try {
+      const user = await API.post('/auth/login', { email, password });
+      StateManager.set(StateManager.KEYS.CURRENT_USER, user);
+      return { success: true, user };
+    } catch (error) {
+      return { success: false, message: error.message };
     }
-
-    const sessionUser = {
-      id: user.id,
-      nama: user.nama,
-      email: user.email,
-      role: user.role,
-    };
-
-    StateManager.set(StateManager.KEYS.CURRENT_USER, sessionUser);
-    return { success: true, user: sessionUser };
   }
 
   static logout() {
@@ -97,7 +59,11 @@ export class AuthManager {
   static redirectIfLoggedIn() {
     const user = this.getCurrentUser();
     if (user) {
-      window.location.href = 'index.html';
+      if (user.role === 'admin') {
+        window.location.href = 'admin.html';
+      } else {
+        window.location.href = 'index.html';
+      }
     }
   }
 
@@ -116,5 +82,3 @@ export class AuthManager {
   }
 }
 
-// Seed admin on module load
-AuthManager._seedAdmin();

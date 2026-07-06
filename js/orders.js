@@ -1,20 +1,33 @@
 // js/orders.js
 import { StateManager } from './state.js';
+import { API } from './api.js';
 
 export class OrderManager {
-  static getOrders() {
-    const currentUser = StateManager.get(StateManager.KEYS.CURRENT_USER);
-    if (!currentUser) return [];
-
-    const allOrders = StateManager.get(StateManager.KEYS.ORDERS, []);
-    return allOrders
-      .filter(o => o.userId === currentUser.id)
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  static async getOrders() {
+    try {
+      const data = await API.get('/orders');
+      return data;
+    } catch (error) {
+      console.error('Failed to get orders:', error);
+      return [];
+    }
   }
 
-  static renderOrders(containerEl) {
-    const orders = this.getOrders();
+  static async checkout(items, totalHarga, pengiriman) {
+    try {
+      const response = await API.post('/orders/checkout', { items, totalHarga, pengiriman });
+      return response; // Contains orderId, whatsappUrl, message
+    } catch (error) {
+      console.error('Checkout failed:', error);
+      throw error;
+    }
+  }
+
+  static async renderOrders(containerEl) {
     if (!containerEl) return;
+    containerEl.innerHTML = '<div class="py-8 text-center"><p class="text-gray-500">Memuat pesanan...</p></div>';
+
+    const orders = await this.getOrders();
 
     if (orders.length === 0) {
       containerEl.innerHTML = `
@@ -50,20 +63,20 @@ export class OrderManager {
             </span>
           </div>
           <div class="flex items-center justify-between text-sm mb-3">
-            <span class="text-gray-500 dark:text-gray-400">${this.formatDate(order.createdAt)}</span>
-            <span class="text-gray-600 dark:text-gray-300">${order.items.length} item</span>
+            <span class="text-gray-500 dark:text-gray-400">${this.formatDate(order.created_at || order.createdAt)}</span>
+            <span class="text-gray-600 dark:text-gray-300">${order.items?.length || 0} item</span>
           </div>
           <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
             <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Pembayaran</span>
-            <span class="text-lg font-bold text-blue-500">${formatRupiah(order.totalHarga)}</span>
+            <span class="text-lg font-bold text-blue-500">${formatRupiah(order.total_harga || order.totalHarga)}</span>
           </div>
         </div>
       `;
     }).join('');
   }
 
-  static showOrderDetail(orderId) {
-    const orders = StateManager.get(StateManager.KEYS.ORDERS, []);
+  static async showOrderDetail(orderId) {
+    const orders = await this.getOrders();
     const order = orders.find(o => o.id === orderId);
     if (!order) return;
 
@@ -93,12 +106,12 @@ export class OrderManager {
               </div>
               <div>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Tanggal Pemesanan</p>
-                <p class="text-sm font-medium text-gray-800 dark:text-gray-100">${this.formatDate(order.createdAt)}</p>
+                <p class="text-sm font-medium text-gray-800 dark:text-gray-100">${this.formatDate(order.created_at || order.createdAt)}</p>
               </div>
               <div>
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Produk yang Dibeli</h3>
                 <div class="space-y-2">
-                  ${order.items.map(item => `
+                  ${(order.items || []).map(item => `
                     <div class="flex items-center justify-between text-sm py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
                       <div class="flex-1">
                         <p class="font-medium text-gray-800 dark:text-gray-100">${item.nama}</p>
@@ -112,14 +125,14 @@ export class OrderManager {
               <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
                 <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Informasi Pengiriman</h3>
                 <div class="text-sm space-y-1 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                  <p class="text-gray-800 dark:text-gray-100"><span class="font-medium text-gray-600 dark:text-gray-400">Nama:</span> ${order.pengiriman.namaLengkap}</p>
-                  <p class="text-gray-800 dark:text-gray-100"><span class="font-medium text-gray-600 dark:text-gray-400">Alamat:</span> ${order.pengiriman.alamat}</p>
-                  <p class="text-gray-800 dark:text-gray-100"><span class="font-medium text-gray-600 dark:text-gray-400">No. HP:</span> ${order.pengiriman.nomorHP}</p>
+                  <p class="text-gray-800 dark:text-gray-100"><span class="font-medium text-gray-600 dark:text-gray-400">Nama:</span> ${order.pengiriman?.namaLengkap || order.nama_lengkap}</p>
+                  <p class="text-gray-800 dark:text-gray-100"><span class="font-medium text-gray-600 dark:text-gray-400">Alamat:</span> ${order.pengiriman?.alamat || order.alamat}</p>
+                  <p class="text-gray-800 dark:text-gray-100"><span class="font-medium text-gray-600 dark:text-gray-400">No. HP:</span> ${order.pengiriman?.nomorHP || order.nomor_hp}</p>
                 </div>
               </div>
               <div class="pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
                 <span class="text-base font-semibold text-gray-700 dark:text-gray-300">Total Pembayaran</span>
-                <span class="text-2xl font-bold text-blue-500">${formatRupiah(order.totalHarga)}</span>
+                <span class="text-2xl font-bold text-blue-500">${formatRupiah(order.total_harga || order.totalHarga)}</span>
               </div>
             </div>
           </div>
@@ -144,6 +157,7 @@ export class OrderManager {
   }
 
   static formatDate(isoString) {
+    if (!isoString) return '';
     return new Date(isoString).toLocaleDateString('id-ID', {
       weekday: 'long',
       year: 'numeric',

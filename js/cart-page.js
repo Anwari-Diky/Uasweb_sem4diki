@@ -40,9 +40,9 @@ function formatRupiah(angka) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
 }
 
-function updateTotal() {
-  const total = CartManager.getTotal();
-  const count = CartManager.getItemCount();
+async function updateTotal() {
+  const total = await CartManager.getTotal();
+  const count = await CartManager.getItemCount();
   if (cartTotalEl) {
     cartTotalEl.innerHTML = `
       <div class="space-y-3">
@@ -64,38 +64,48 @@ function updateTotal() {
   }
 }
 
-function renderCart() {
-  CartManager.renderCartItems(cartContainer);
-  CartManager.updateCartBadge();
-  updateTotal();
+async function renderCart() {
+  await CartManager.renderCartItems(cartContainer);
+  await CartManager.updateCartBadge();
+  await updateTotal();
 
   // Attach event listeners to rendered items
   cartContainer.querySelectorAll('.qty-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const productId = btn.dataset.productId;
+    btn.addEventListener('click', async () => {
+      const cartId = btn.dataset.cartId;
       const action = btn.dataset.action;
-      const items = CartManager.getItems();
-      const item = items.find(i => i.productId === productId);
+      const items = await CartManager.getItems();
+      const item = items.find(i => String(i.id) === String(cartId));
       if (!item) return;
-      const newQty = action === 'increase' ? item.quantity + 1 : item.quantity - 1;
-      CartManager.updateQuantity(productId, newQty);
-      renderCart();
+      
+      try {
+        const newQty = action === 'increase' ? item.quantity + 1 : item.quantity - 1;
+        await CartManager.updateQuantity(cartId, newQty);
+        renderCart();
+      } catch (err) {
+        Toast.error('Gagal memperbarui jumlah');
+      }
     });
   });
 
   cartContainer.querySelectorAll('.remove-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const productId = btn.dataset.productId;
-      CartManager.removeItem(productId);
-      Toast.warning('Item dihapus dari keranjang');
-      renderCart();
+    btn.addEventListener('click', async () => {
+      const cartId = btn.dataset.cartId;
+      try {
+        await CartManager.removeItem(cartId);
+        Toast.warning('Item dihapus dari keranjang');
+        renderCart();
+      } catch (err) {
+        Toast.error('Gagal menghapus item');
+      }
     });
   });
 }
 
 // Checkout button
-checkoutBtn?.addEventListener('click', () => {
-  if (CartManager.getItemCount() > 0) {
+checkoutBtn?.addEventListener('click', async () => {
+  const count = await CartManager.getItemCount();
+  if (count > 0) {
     window.location.href = 'checkout.html';
   }
 });

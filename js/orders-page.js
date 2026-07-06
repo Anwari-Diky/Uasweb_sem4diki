@@ -22,15 +22,19 @@ document.getElementById('hamburger-btn')?.addEventListener('click', () => {
 document.getElementById('logout-btn')?.addEventListener('click', () => AuthManager.logout());
 document.getElementById('logout-btn-mobile')?.addEventListener('click', () => AuthManager.logout());
 
-CartManager.updateCartBadge();
+async function init() {
+  await CartManager.updateCartBadge();
 
-const ordersContainer = document.getElementById('orders-container');
-OrderManager.renderOrders(ordersContainer);
+  const ordersContainer = document.getElementById('orders-container');
+  await OrderManager.renderOrders(ordersContainer);
 
-// Attach click events to order cards
-ordersContainer?.addEventListener('click', (e) => {
-  const card = e.target.closest('.order-card');
-  if (card) {
-    OrderManager.showOrderDetail(card.dataset.orderId);
-  }
-});
+  // Attach click events to order cards
+  ordersContainer?.addEventListener('click', async (e) => {
+    const card = e.target.closest('.order-card');
+    if (card) {
+      await OrderManager.showOrderDetail(card.dataset.orderId);
+    }
+  });
+}
+
+init();

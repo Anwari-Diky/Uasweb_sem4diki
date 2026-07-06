@@ -25,52 +25,78 @@ document.getElementById('hamburger-btn')?.addEventListener('click', () => {
 document.getElementById('logout-btn')?.addEventListener('click', () => AuthManager.logout());
 document.getElementById('logout-btn-mobile')?.addEventListener('click', () => AuthManager.logout());
 
-CartManager.updateCartBadge();
+async function init() {
+  await CartManager.updateCartBadge();
+  await loadAndRenderTable();
+}
+
+init();
 
 const tableContainer = document.getElementById('product-table-container');
 
 async function loadAndRenderTable() {
-  await ProductManager.loadProducts();
-  AdminManager.renderProductTable(tableContainer);
+  await AdminManager.renderProductTable(tableContainer);
   attachTableEvents();
 }
 
 function attachTableEvents() {
   tableContainer?.querySelectorAll('.edit-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      AdminManager.showProductForm(btn.dataset.productId);
-      // Re-render after modal closes
-      const observer = new MutationObserver(() => {
-        if (!document.getElementById('product-form-modal')) {
-          loadAndRenderTable();
-          Toast.success('Produk berhasil diperbarui!');
-          observer.disconnect();
-        }
-      });
-      observer.observe(document.body, { childList: true });
+    btn.addEventListener('click', async () => {
+      await AdminManager.showProductForm(btn.dataset.productId);
     });
   });
 
   tableContainer?.querySelectorAll('.delete-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      AdminManager.confirmDelete(btn.dataset.productId, () => {
-        loadAndRenderTable();
+      AdminManager.confirmDelete(btn.dataset.productId, async () => {
+        await loadAndRenderTable();
         Toast.success('Produk berhasil dihapus!');
       });
     });
   });
 }
 
-document.getElementById('add-product-btn')?.addEventListener('click', () => {
-  AdminManager.showProductForm(null);
-  const observer = new MutationObserver(() => {
-    if (!document.getElementById('product-form-modal')) {
-      loadAndRenderTable();
-      Toast.success('Produk baru berhasil ditambahkan!');
-      observer.disconnect();
-    }
-  });
-  observer.observe(document.body, { childList: true });
+document.getElementById('add-product-btn')?.addEventListener('click', async () => {
+  await AdminManager.showProductForm(null);
 });
 
-loadAndRenderTable();
+// Listen for product changes to re-render table
+window.addEventListener('product-changed', async () => {
+  await loadAndRenderTable();
+  Toast.success('Daftar produk berhasil diperbarui!');
+});
+
+// Tab Navigation Logic
+const tabBtns = {
+  produk: document.getElementById('tab-btn-produk'),
+  pesanan: document.getElementById('tab-btn-pesanan'),
+  modul: document.getElementById('tab-btn-modul')
+};
+
+const tabContents = {
+  produk: document.getElementById('tab-produk'),
+  pesanan: document.getElementById('tab-pesanan'),
+  modul: document.getElementById('tab-modul')
+};
+
+async function switchTab(activeTab) {
+  Object.keys(tabBtns).forEach(tab => {
+    if (tab === activeTab) {
+      tabBtns[tab].classList.add('text-blue-600', 'dark:text-blue-400', 'border-blue-600', 'dark:border-blue-400');
+      tabBtns[tab].classList.remove('text-gray-500', 'dark:text-gray-400', 'border-transparent');
+      tabContents[tab].classList.remove('hidden');
+    } else {
+      tabBtns[tab].classList.remove('text-blue-600', 'dark:text-blue-400', 'border-blue-600', 'dark:border-blue-400');
+      tabBtns[tab].classList.add('text-gray-500', 'dark:text-gray-400', 'border-transparent');
+      tabContents[tab].classList.add('hidden');
+    }
+  });
+
+  if (activeTab === 'pesanan') {
+    await AdminManager.renderOrdersTable(document.getElementById('admin-orders-container'));
+  }
+}
+
+tabBtns.produk?.addEventListener('click', () => switchTab('produk'));
+tabBtns.pesanan?.addEventListener('click', () => switchTab('pesanan'));
+tabBtns.modul?.addEventListener('click', () => switchTab('modul'));

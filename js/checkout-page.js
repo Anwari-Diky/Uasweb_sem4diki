@@ -8,9 +8,13 @@ ThemeManager.init();
 if (!AuthManager.requireAuth()) throw new Error('Not authenticated');
 
 // Redirect if cart empty
-if (CartManager.getItemCount() === 0) {
-  window.location.href = 'index.html';
+async function checkCart() {
+  const count = await CartManager.getItemCount();
+  if (count === 0) {
+    window.location.href = 'index.html';
+  }
 }
+checkCart();
 
 const currentUser = AuthManager.getCurrentUser();
 
@@ -36,7 +40,7 @@ CartManager.updateCartBadge();
 
 // Form submit
 const form = document.getElementById('checkout-form');
-form?.addEventListener('submit', (e) => {
+form?.addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const namaLengkap = document.getElementById('nama-lengkap').value;
@@ -70,7 +74,12 @@ form?.addEventListener('submit', (e) => {
     return;
   }
 
-  const result = CheckoutManager.processCheckout({ namaLengkap, alamat, nomorHP });
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = 'Memproses...';
+  submitBtn.disabled = true;
+
+  const result = await CheckoutManager.processCheckout({ namaLengkap, alamat, nomorHP });
 
   if (result.success) {
     Toast.success('Pesanan berhasil dikonfirmasi!');
@@ -81,8 +90,17 @@ form?.addEventListener('submit', (e) => {
       successSection.classList.remove('hidden');
       document.getElementById('transaction-id').textContent = result.order.id;
     }
-    CartManager.updateCartBadge();
+    await CartManager.updateCartBadge();
+    
+    // Redirect to WhatsApp after 2 seconds
+    if (result.whatsappUrl) {
+      setTimeout(() => {
+        window.location.href = result.whatsappUrl;
+      }, 2000);
+    }
   } else {
     Toast.error(result.message || 'Terjadi kesalahan');
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
   }
 });

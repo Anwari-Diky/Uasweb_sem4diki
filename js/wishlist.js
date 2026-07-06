@@ -1,51 +1,57 @@
 // js/wishlist.js
 import { StateManager } from './state.js';
+import { API } from './api.js';
 
 export class WishlistManager {
-  static _getKey() {
-    const user = StateManager.get(StateManager.KEYS.CURRENT_USER, null);
-    return user ? StateManager.KEYS.wishlist(user.id) : 'wishlist_guest';
-  }
-
-  static getItems() {
-    return StateManager.get(this._getKey(), []);
-  }
-
-  static addItem(product) {
-    const items = this.getItems();
-    const exists = items.some(i => i.productId === product.id);
-    if (!exists) {
-      items.push({
-        productId: product.id,
-        nama: product.nama,
-        harga: product.harga,
-        gambar: product.gambar,
-        addedAt: new Date().toISOString(),
-      });
-      StateManager.set(this._getKey(), items);
+  static async getItems() {
+    try {
+      const user = StateManager.get(StateManager.KEYS.CURRENT_USER);
+      if (!user) return [];
+      const data = await API.get('/wishlist');
+      return data;
+    } catch (error) {
+      console.error('Failed to get wishlist:', error);
+      return [];
     }
   }
 
-  static removeItem(productId) {
-    const items = this.getItems().filter(i => i.productId !== productId);
-    StateManager.set(this._getKey(), items);
+  static async addItem(product) {
+    try {
+      await API.post('/wishlist', { productId: product.id });
+    } catch (error) {
+      console.error('Failed to add to wishlist:', error);
+      throw error;
+    }
   }
 
-  static toggleItem(product) {
-    if (this.isInWishlist(product.id)) {
-      this.removeItem(product.id);
+  static async removeItem(productId) {
+    try {
+      await API.delete(`/wishlist/${productId}`);
+    } catch (error) {
+      console.error('Failed to remove from wishlist:', error);
+      throw error;
+    }
+  }
+
+  static async toggleItem(product) {
+    const isIn = await this.isInWishlist(product.id);
+    if (isIn) {
+      await this.removeItem(product.id);
     } else {
-      this.addItem(product);
+      await this.addItem(product);
     }
   }
 
-  static isInWishlist(productId) {
-    return this.getItems().some(i => i.productId === productId);
+  static async isInWishlist(productId) {
+    const items = await this.getItems();
+    return items.some(i => i.product_id === productId || i.productId === productId);
   }
 
-  static renderWishlist(containerEl) {
-    const items = this.getItems();
+  static async renderWishlist(containerEl) {
     if (!containerEl) return;
+    containerEl.innerHTML = '<div class="col-span-full py-8 text-center"><p class="text-gray-500">Memuat wishlist...</p></div>';
+
+    const items = await this.getItems();
 
     if (items.length === 0) {
       containerEl.innerHTML = `
@@ -61,16 +67,16 @@ export class WishlistManager {
     }
 
     containerEl.innerHTML = items.map(item => `
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden flex flex-col" data-wishlist-item="${item.productId}">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden flex flex-col" data-wishlist-item="${item.product_id || item.productId}">
         <img src="${item.gambar}" alt="${item.nama}" class="w-full aspect-square object-cover" onerror="this.src='https://placehold.co/400x400?text=No+Image'">
         <div class="p-4 flex flex-col flex-1">
           <h3 class="font-semibold text-gray-800 dark:text-gray-100 line-clamp-2 mb-1">${item.nama}</h3>
           <p class="text-blue-500 font-bold mb-4">${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(item.harga)}</p>
           <div class="mt-auto flex gap-2">
-            <button class="wishlist-add-cart flex-1 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold py-2 px-3 rounded-lg transition-colors" data-product-id="${item.productId}">
+            <button class="wishlist-add-cart flex-1 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold py-2 px-3 rounded-lg transition-colors" data-product-id="${item.product_id || item.productId}">
               Tambah ke Cart
             </button>
-            <button class="wishlist-remove p-2 rounded-lg border border-red-200 dark:border-red-800 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-gray-700 transition-colors" data-product-id="${item.productId}" aria-label="Hapus dari wishlist">
+            <button class="wishlist-remove p-2 rounded-lg border border-red-200 dark:border-red-800 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-gray-700 transition-colors" data-product-id="${item.product_id || item.productId}" aria-label="Hapus dari wishlist">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>

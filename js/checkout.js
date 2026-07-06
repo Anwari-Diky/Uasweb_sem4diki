@@ -1,6 +1,7 @@
 // js/checkout.js
 import { StateManager } from './state.js';
 import { CartManager } from './cart.js';
+import { OrderManager } from './orders.js';
 
 export class CheckoutManager {
   static validateForm(namaLengkap, alamat, nomorHP) {
@@ -29,57 +30,38 @@ export class CheckoutManager {
     return /^\d{10,13}$/.test(cleaned);
   }
 
-  static generateTransactionId() {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substr(2, 4).toUpperCase();
-    return `TRX-${timestamp}-${random}`;
-  }
-
-  static processCheckout(formData) {
-    const currentUser = StateManager.get(StateManager.KEYS.CURRENT_USER);
-    if (!currentUser) {
-      return { success: false, message: 'User tidak ditemukan' };
-    }
-
-    const cartItems = CartManager.getItems();
+  static async processCheckout(formData) {
+    const cartItems = await CartManager.getItems();
     if (cartItems.length === 0) {
       return { success: false, message: 'Keranjang kosong' };
     }
+    const totalHarga = await CartManager.getTotal();
 
-    const order = {
-      id: this.generateTransactionId(),
-      userId: currentUser.id,
-      items: cartItems.map(item => ({
-        productId: item.productId,
-        nama: item.nama,
-        harga: item.harga,
-        quantity: item.quantity,
-        subtotal: item.harga * item.quantity,
-      })),
-      pengiriman: {
+    try {
+      const pengiriman = {
         namaLengkap: formData.namaLengkap.trim(),
         alamat: formData.alamat.trim(),
         nomorHP: formData.nomorHP.replace(/\D/g, ''),
-      },
-      totalHarga: CartManager.getTotal(),
-      status: 'Pending',
-      createdAt: new Date().toISOString(),
-    };
-
-    const orders = StateManager.get(StateManager.KEYS.ORDERS, []);
-    orders.push(order);
-    StateManager.set(StateManager.KEYS.ORDERS, orders);
-
-    CartManager.clearCart();
-
-    return { success: true, order };
+      };
+      
+      const response = await OrderManager.checkout(cartItems, totalHarga, pengiriman);
+      
+      return { 
+        success: true, 
+        order: { id: response.orderId }, 
+        whatsappUrl: response.whatsappUrl 
+      };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   }
 
-  static renderOrderSummary(containerEl) {
-    const items = CartManager.getItems();
-    const total = CartManager.getTotal();
-
+  static async renderOrderSummary(containerEl) {
     if (!containerEl) return;
+    containerEl.innerHTML = '<div class="py-4 text-center text-gray-500">Memuat rincian...</div>';
+
+    const items = await CartManager.getItems();
+    const total = await CartManager.getTotal();
 
     if (items.length === 0) {
       containerEl.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-4">Keranjang kosong</p>';

@@ -1,14 +1,15 @@
 // js/admin.js
 import { StateManager } from './state.js';
 import { ProductManager } from './product.js';
+import { OrderManager } from './orders.js';
+import { API } from './api.js';
 
 export class AdminManager {
-  static renderProductTable(containerEl) {
-    const products = ProductManager._cache.length > 0
-      ? ProductManager._cache
-      : StateManager.get(StateManager.KEYS.PRODUCTS_OVERRIDE, []);
-
+  static async renderProductTable(containerEl) {
     if (!containerEl) return;
+    containerEl.innerHTML = '<div class="py-8 text-center"><p class="text-gray-500">Memuat produk...</p></div>';
+
+    const products = await ProductManager.loadProducts();
 
     if (products.length === 0) {
       containerEl.innerHTML = '<p class="text-center text-gray-500 dark:text-gray-400 py-8">Belum ada produk</p>';
@@ -57,11 +58,55 @@ export class AdminManager {
     `;
   }
 
-  static showProductForm(productId = null) {
-    const products = ProductManager._cache.length > 0
-      ? ProductManager._cache
-      : StateManager.get(StateManager.KEYS.PRODUCTS_OVERRIDE, []);
-    const product = productId ? products.find(p => p.id === productId) : null;
+  static async renderOrdersTable(containerEl) {
+    if (!containerEl) return;
+    containerEl.innerHTML = '<div class="py-8 text-center"><p class="text-gray-500">Memuat pesanan...</p></div>';
+
+    const orders = await OrderManager.getOrders();
+
+    if (orders.length === 0) {
+      containerEl.innerHTML = `
+        <div class="col-span-full flex flex-col items-center justify-center py-8 text-center">
+          <p class="text-gray-500 dark:text-gray-400">Belum ada pesanan masuk</p>
+        </div>
+      `;
+      return;
+    }
+
+    const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+    
+    const formatDate = (isoString) => new Date(isoString).toLocaleDateString('id-ID', {
+      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+
+    const statusColors = {
+      'Pending': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+      'Diproses': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+      'Selesai': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    };
+
+    containerEl.innerHTML = orders.map(order => `
+      <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-100 dark:border-gray-600 flex flex-col gap-3">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">ID: <span class="font-mono text-gray-800 dark:text-gray-200">${order.id}</span></p>
+            <p class="text-sm font-medium text-gray-800 dark:text-gray-100">${order.pengiriman.namaLengkap}</p>
+          </div>
+          <span class="px-2 py-1 rounded-full text-[10px] font-bold ${statusColors[order.status] || statusColors['Pending']} uppercase tracking-wider">${order.status}</span>
+        </div>
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-gray-500 dark:text-gray-400">${formatDate(order.created_at || order.createdAt)}</span>
+          <span class="font-bold text-blue-500">${formatRupiah(order.total_harga || order.totalHarga)}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  static async showProductForm(productId = null) {
+    let product = null;
+    if (productId) {
+      product = ProductManager.getProductById(productId);
+    }
     const isEdit = !!product;
 
     const modalHTML = `
@@ -85,11 +130,17 @@ export class AdminManager {
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kategori</label>
-                <input id="pf-kategori" type="text" value="${product?.kategori || ''}" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <select id="pf-kategori" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                  <option value="Sepatu Bola" ${product?.kategori === 'Sepatu Bola' ? 'selected' : ''}>Sepatu Bola</option>
+                  <option value="Sepatu Futsal" ${product?.kategori === 'Sepatu Futsal' ? 'selected' : ''}>Sepatu Futsal</option>
+                  <option value="Sepatu Lari" ${product?.kategori === 'Sepatu Lari' ? 'selected' : ''}>Sepatu Lari</option>
+                  <option value="Aksesoris" ${product?.kategori === 'Aksesoris' ? 'selected' : ''}>Aksesoris</option>
+                </select>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL Gambar</label>
-                <input id="pf-gambar" type="text" value="${product?.gambar || ''}" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Upload Gambar</label>
+                <input id="pf-gambar" type="file" accept="image/*" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                ${isEdit && product?.gambar ? `<p class="text-xs text-gray-500 mt-1">Biarkan kosong jika tidak ingin mengubah gambar.</p><input type="hidden" id="pf-gambar-lama" value="${product.gambar}">` : ''}
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deskripsi</label>
@@ -130,42 +181,50 @@ export class AdminManager {
     document.getElementById('close-product-form')?.addEventListener('click', closeModal);
     document.getElementById('cancel-product-form')?.addEventListener('click', closeModal);
 
-    document.getElementById('product-form')?.addEventListener('submit', (e) => {
+    document.getElementById('product-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const formData = {
-        nama: document.getElementById('pf-nama').value.trim(),
-        harga: Number(document.getElementById('pf-harga').value),
-        kategori: document.getElementById('pf-kategori').value.trim(),
-        gambar: document.getElementById('pf-gambar').value.trim() || 'https://placehold.co/400x400?text=Produk',
-        deskripsi: document.getElementById('pf-deskripsi').value.trim(),
-        stok: Number(document.getElementById('pf-stok').value),
-        rating: Number(document.getElementById('pf-rating').value),
-      };
-      this.saveProduct(formData, productId);
-      closeModal();
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Menyimpan...';
+      submitBtn.disabled = true;
+
+      const formData = new FormData();
+      formData.append('nama', document.getElementById('pf-nama').value.trim());
+      formData.append('harga', document.getElementById('pf-harga').value);
+      formData.append('kategori', document.getElementById('pf-kategori').value);
+      formData.append('deskripsi', document.getElementById('pf-deskripsi').value.trim());
+      formData.append('stok', document.getElementById('pf-stok').value);
+      formData.append('rating', document.getElementById('pf-rating').value);
+
+      const fileInput = document.getElementById('pf-gambar');
+      if (fileInput.files.length > 0) {
+        formData.append('gambar', fileInput.files[0]);
+      } else {
+        const gambarLama = document.getElementById('pf-gambar-lama');
+        if (gambarLama) {
+          formData.append('gambar', gambarLama.value);
+        }
+      }
+      
+      try {
+        await this.saveProduct(formData, productId);
+        closeModal();
+        // Dispatch event so UI can reload
+        window.dispatchEvent(new Event('product-changed'));
+      } catch (error) {
+        alert('Gagal menyimpan produk: ' + error.message);
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+      }
     });
   }
 
-  static saveProduct(formData, productId = null) {
-    let products = ProductManager._cache.length > 0
-      ? [...ProductManager._cache]
-      : [...(StateManager.get(StateManager.KEYS.PRODUCTS_OVERRIDE, []))];
-
+  static async saveProduct(formData, productId = null) {
     if (productId) {
-      const idx = products.findIndex(p => p.id === productId);
-      if (idx !== -1) {
-        products[idx] = { ...products[idx], ...formData };
-      }
+      await API.put(`/products/${productId}`, formData);
     } else {
-      products.push({
-        id: `prod_${Date.now()}`,
-        ...formData,
-        createdAt: new Date().toISOString(),
-      });
+      await API.post('/products', formData);
     }
-
-    ProductManager.saveProducts(products);
-    return products;
   }
 
   static confirmDelete(productId, onConfirm) {
@@ -195,20 +254,24 @@ export class AdminManager {
       document.body.classList.remove('overflow-hidden');
     };
 
-    document.getElementById('confirm-delete-btn')?.addEventListener('click', () => {
-      this.deleteProduct(productId);
-      closeModal();
-      if (onConfirm) onConfirm();
+    document.getElementById('confirm-delete-btn')?.addEventListener('click', async () => {
+      const btn = document.getElementById('confirm-delete-btn');
+      btn.textContent = 'Menghapus...';
+      btn.disabled = true;
+      try {
+        await this.deleteProduct(productId);
+        closeModal();
+        if (onConfirm) onConfirm();
+      } catch (error) {
+        alert('Gagal menghapus produk: ' + error.message);
+        closeModal();
+      }
     });
 
     document.getElementById('cancel-delete-btn')?.addEventListener('click', closeModal);
   }
 
-  static deleteProduct(productId) {
-    let products = ProductManager._cache.length > 0
-      ? [...ProductManager._cache]
-      : [...(StateManager.get(StateManager.KEYS.PRODUCTS_OVERRIDE, []))];
-    products = products.filter(p => p.id !== productId);
-    ProductManager.saveProducts(products);
+  static async deleteProduct(productId) {
+    await API.delete(`/products/${productId}`);
   }
 }

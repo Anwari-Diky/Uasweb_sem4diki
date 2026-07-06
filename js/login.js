@@ -33,7 +33,7 @@ function setLoading(loading) {
   }
 }
 
-form.addEventListener('submit', (e) => {
+form.addEventListener('submit', async (e) => {
   e.preventDefault();
   clearErrors();
 
@@ -58,21 +58,22 @@ form.addEventListener('submit', (e) => {
 
   setLoading(true);
 
-  // Simulate brief async delay for UX feedback
-  setTimeout(() => {
-    const result = AuthManager.login(email, password);
+  const result = await AuthManager.login(email, password);
 
-    if (result.success) {
-      Toast.success(`Selamat datang, ${result.user.nama}!`);
-      setTimeout(() => {
+  if (result.success) {
+    Toast.success(`Selamat datang, ${result.user.nama}!`);
+    setTimeout(() => {
+      if (result.user.role === 'admin') {
+        window.location.href = 'admin.html';
+      } else {
         window.location.href = 'index.html';
-      }, 800);
-    } else {
-      setLoading(false);
-      emailError.textContent = result.message;
-      emailInput.classList.add('border-red-500');
-    }
-  }, 500);
+      }
+    }, 800);
+  } else {
+    setLoading(false);
+    emailError.textContent = result.message;
+    emailInput.classList.add('border-red-500');
+  }
 });
 
 document.getElementById('theme-toggle')?.addEventListener('click', () => ThemeManager.toggle());

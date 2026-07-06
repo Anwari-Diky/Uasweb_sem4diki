@@ -102,9 +102,10 @@ async function loadAndRender() {
   searchFilter.applyFilters();
 }
 
-function renderCurrentPage() {
+async function renderCurrentPage() {
   const items = pagination.getCurrentPageItems();
-  const wishlistIds = WishlistManager.getItems().map(w => w.productId);
+  const wishlistItems = await WishlistManager.getItems();
+  const wishlistIds = wishlistItems.map(w => w.productId || w.product_id);
   ProductManager.renderProducts(items, productGrid, wishlistIds);
   pagination.renderControls(paginationContainer, () => {
     renderCurrentPage();
@@ -113,39 +114,47 @@ function renderCurrentPage() {
 
   // Attach cart button events
   productGrid.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
       e.stopPropagation();
       const productId = btn.dataset.productId;
       const product = ProductManager.getProductById(productId);
       if (product) {
-        CartManager.addItem(product);
-        CartManager.updateCartBadge();
-        Toast.success(`${product.nama} ditambahkan ke cart!`);
+        try {
+          await CartManager.addItem(product);
+          await CartManager.updateCartBadge();
+          Toast.success(`${product.nama} ditambahkan ke cart!`);
+        } catch(e) {
+          Toast.error('Gagal menambahkan ke cart');
+        }
       }
     });
   });
 
   // Attach wishlist button events
   productGrid.querySelectorAll('.wishlist-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
       e.stopPropagation();
       const productId = btn.dataset.productId;
       const product = ProductManager.getProductById(productId);
       if (product) {
-        WishlistManager.toggleItem(product);
-        const isNowWishlisted = WishlistManager.isInWishlist(productId);
-        // Update button appearance
-        const svg = btn.querySelector('svg');
-        if (isNowWishlisted) {
-          btn.classList.add('text-red-500');
-          btn.classList.remove('text-gray-400');
-          svg.setAttribute('fill', 'currentColor');
-          Toast.success(`${product.nama} ditambahkan ke wishlist!`);
-        } else {
-          btn.classList.remove('text-red-500');
-          btn.classList.add('text-gray-400');
-          svg.setAttribute('fill', 'none');
-          Toast.warning(`${product.nama} dihapus dari wishlist`);
+        try {
+          await WishlistManager.toggleItem(product);
+          const isNowWishlisted = await WishlistManager.isInWishlist(productId);
+          // Update button appearance
+          const svg = btn.querySelector('svg');
+          if (isNowWishlisted) {
+            btn.classList.add('text-red-500');
+            btn.classList.remove('text-gray-400');
+            svg.setAttribute('fill', 'currentColor');
+            Toast.success(`${product.nama} ditambahkan ke wishlist!`);
+          } else {
+            btn.classList.remove('text-red-500');
+            btn.classList.add('text-gray-400');
+            svg.setAttribute('fill', 'none');
+            Toast.warning(`${product.nama} dihapus dari wishlist`);
+          }
+        } catch(e) {
+          Toast.error('Gagal memperbarui wishlist');
         }
       }
     });
@@ -163,12 +172,12 @@ function renderCurrentPage() {
 }
 
 // Product detail modal
-function showProductModal(product) {
+async function showProductModal(product) {
   const modal = document.getElementById('product-modal');
   const modalContent = document.getElementById('modal-content');
   if (!modal || !modalContent) return;
 
-  const isWishlisted = WishlistManager.isInWishlist(product.id);
+  const isWishlisted = await WishlistManager.isInWishlist(product.id);
   const stars = ProductManager._renderStars(product.rating || 0);
 
   modalContent.innerHTML = `
@@ -202,21 +211,29 @@ function showProductModal(product) {
   modal.classList.remove('hidden');
   document.body.classList.add('overflow-hidden');
 
-  document.getElementById('modal-add-cart')?.addEventListener('click', () => {
-    CartManager.addItem(product);
-    CartManager.updateCartBadge();
-    Toast.success(`${product.nama} ditambahkan ke cart!`);
+  document.getElementById('modal-add-cart')?.addEventListener('click', async () => {
+    try {
+      await CartManager.addItem(product);
+      await CartManager.updateCartBadge();
+      Toast.success(`${product.nama} ditambahkan ke cart!`);
+    } catch(e) {
+      Toast.error('Gagal menambahkan ke cart');
+    }
   });
 
-  document.getElementById('modal-wishlist')?.addEventListener('click', (e) => {
-    WishlistManager.toggleItem(product);
-    const btn = e.currentTarget;
-    const svg = btn.querySelector('svg');
-    const isNow = WishlistManager.isInWishlist(product.id);
-    btn.classList.toggle('text-red-500', isNow);
-    btn.classList.toggle('text-gray-400', !isNow);
-    svg.setAttribute('fill', isNow ? 'currentColor' : 'none');
-    Toast[isNow ? 'success' : 'warning'](`${product.nama} ${isNow ? 'ditambahkan ke' : 'dihapus dari'} wishlist`);
+  document.getElementById('modal-wishlist')?.addEventListener('click', async (e) => {
+    try {
+      await WishlistManager.toggleItem(product);
+      const btn = e.currentTarget;
+      const svg = btn.querySelector('svg');
+      const isNow = await WishlistManager.isInWishlist(product.id);
+      btn.classList.toggle('text-red-500', isNow);
+      btn.classList.toggle('text-gray-400', !isNow);
+      svg.setAttribute('fill', isNow ? 'currentColor' : 'none');
+      Toast[isNow ? 'success' : 'warning'](`${product.nama} ${isNow ? 'ditambahkan ke' : 'dihapus dari'} wishlist`);
+    } catch(err) {
+      Toast.error('Gagal update wishlist');
+    }
   });
 }
 

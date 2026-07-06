@@ -1,22 +1,14 @@
 // js/product.js
 import { StateManager } from './state.js';
+import { API } from './api.js';
 
 export class ProductManager {
   static _cache = [];
 
   static async loadProducts() {
     try {
-      // Check for admin override first
-      const override = StateManager.get(StateManager.KEYS.PRODUCTS_OVERRIDE, null);
-      if (override && Array.isArray(override) && override.length > 0) {
-        this._cache = override;
-        return this._cache;
-      }
-
-      const response = await fetch('data/products.json');
-      if (!response.ok) throw new Error('Failed to fetch products');
-      const data = await response.json();
-      this._cache = data.products || [];
+      const data = await API.get('/products');
+      this._cache = data;
       return this._cache;
     } catch (error) {
       console.error('ProductManager.loadProducts error:', error);
@@ -133,9 +125,9 @@ export class ProductManager {
     return this._cache.find(p => p.id === id) || null;
   }
 
-  static saveProducts(products) {
+  static async saveProducts(products) {
+    // This is historically used by admin, we will leave the signature but it won't be used directly like this anymore since admin operations hit API directly.
     this._cache = products;
-    StateManager.set(StateManager.KEYS.PRODUCTS_OVERRIDE, products);
   }
 
   static _renderStars(rating) {

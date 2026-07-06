@@ -27,27 +27,36 @@ CartManager.updateCartBadge();
 
 const wishlistContainer = document.getElementById('wishlist-container');
 
-function renderWishlist() {
-  WishlistManager.renderWishlist(wishlistContainer);
-  CartManager.updateCartBadge();
+async function renderWishlist() {
+  await WishlistManager.renderWishlist(wishlistContainer);
+  await CartManager.updateCartBadge();
 
   wishlistContainer?.querySelectorAll('.wishlist-remove').forEach(btn => {
-    btn.addEventListener('click', () => {
-      WishlistManager.removeItem(btn.dataset.productId);
-      Toast.warning('Produk dihapus dari wishlist');
-      renderWishlist();
+    btn.addEventListener('click', async () => {
+      const productId = btn.dataset.productId;
+      try {
+        await WishlistManager.removeItem(productId);
+        Toast.warning('Produk dihapus dari wishlist');
+        renderWishlist();
+      } catch (err) {
+        Toast.error('Gagal menghapus wishlist');
+      }
     });
   });
 
   wishlistContainer?.querySelectorAll('.wishlist-add-cart').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const productId = btn.dataset.productId;
-      const items = WishlistManager.getItems();
-      const item = items.find(i => i.productId === productId);
+      const items = await WishlistManager.getItems();
+      const item = items.find(i => String(i.productId || i.product_id) === String(productId));
       if (item) {
-        CartManager.addItem({ id: item.productId, nama: item.nama, harga: item.harga, gambar: item.gambar });
-        CartManager.updateCartBadge();
-        Toast.success(`${item.nama} ditambahkan ke cart!`);
+        try {
+          await CartManager.addItem({ id: item.productId || item.product_id, nama: item.nama, harga: item.harga, gambar: item.gambar });
+          await CartManager.updateCartBadge();
+          Toast.success(`${item.nama} ditambahkan ke cart!`);
+        } catch (err) {
+          Toast.error('Gagal menambah ke cart');
+        }
       }
     });
   });

@@ -33,7 +33,7 @@ function setLoading(loading) {
   }
 }
 
-form.addEventListener('submit', (e) => {
+form.addEventListener('submit', async (e) => {
   e.preventDefault();
   clearErrors();
 
@@ -43,31 +43,28 @@ form.addEventListener('submit', (e) => {
 
   setLoading(true);
 
-  // Simulate brief async delay for UX feedback
-  setTimeout(() => {
-    const result = AuthManager.register(nama, email, password);
+  const result = await AuthManager.register(nama, email, password);
 
-    if (result.success) {
-      Toast.success('Registrasi berhasil! Silakan login.');
-      setTimeout(() => {
-        window.location.href = 'login.html';
-      }, 1000);
-    } else {
-      setLoading(false);
-      if (result.errors.nama) {
-        namaError.textContent = result.errors.nama;
-        namaInput.classList.add('border-red-500');
-      }
-      if (result.errors.email) {
-        emailError.textContent = result.errors.email;
-        emailInput.classList.add('border-red-500');
-      }
-      if (result.errors.password) {
-        passwordError.textContent = result.errors.password;
-        passwordInput.classList.add('border-red-500');
-      }
+  if (result.success) {
+    Toast.success('Registrasi berhasil! Silakan login.');
+    setTimeout(() => {
+      window.location.href = 'login.html';
+    }, 1000);
+  } else {
+    setLoading(false);
+    if (result.errors.nama) {
+      namaError.textContent = result.errors.nama;
+      namaInput.classList.add('border-red-500');
     }
-  }, 500);
+    if (result.errors.email) {
+      emailError.textContent = result.errors.email;
+      emailInput.classList.add('border-red-500');
+    }
+    if (result.errors.password) {
+      passwordError.textContent = result.errors.password;
+      passwordInput.classList.add('border-red-500');
+    }
+  }
 });
 
 document.getElementById('theme-toggle')?.addEventListener('click', () => ThemeManager.toggle());
