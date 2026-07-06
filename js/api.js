@@ -1,7 +1,7 @@
 import { StateManager } from './state.js';
 
 export class API {
-  static BASE_URL = 'https://specs-backend-production.up.railway.app/api';
+  static BASE_URL = 'http://localhost:5000/api';
 
   static getHeaders() {
     const headers = {
