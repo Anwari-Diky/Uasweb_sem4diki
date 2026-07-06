@@ -38,13 +38,120 @@ document.getElementById('logout-btn-mobile')?.addEventListener('click', () => Au
 CheckoutManager.renderOrderSummary(document.getElementById('order-summary'));
 CartManager.updateCartBadge();
 
+// --- LOGIKA ALAMAT INDONESIA ---
+const API_WILAYAH = 'https://www.emsifa.com/api-wilayah-indonesia/api';
+
+const selectProvinsi = document.getElementById('provinsi');
+const selectKota = document.getElementById('kota');
+const selectKecamatan = document.getElementById('kecamatan');
+const selectDesa = document.getElementById('desa');
+const inputDetail = document.getElementById('detail-alamat');
+const inputKodePos = document.getElementById('kode-pos');
+const inputAlamatHidden = document.getElementById('alamat');
+
+async function loadProvinces() {
+  try {
+    const res = await fetch(`${API_WILAYAH}/provinces.json`);
+    const data = await res.json();
+    data.forEach(prov => {
+      const option = document.createElement('option');
+      option.value = prov.id;
+      option.textContent = prov.name;
+      selectProvinsi?.appendChild(option);
+    });
+  } catch (err) {
+    console.error('Gagal memuat provinsi:', err);
+  }
+}
+
+if (selectProvinsi) {
+  loadProvinces();
+
+  selectProvinsi.addEventListener('change', async (e) => {
+    selectKota.innerHTML = '<option value="">Pilih Kota/Kabupaten</option>';
+    selectKecamatan.innerHTML = '<option value="">Pilih Kecamatan</option>';
+    selectDesa.innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
+    selectKota.disabled = true;
+    selectKecamatan.disabled = true;
+    selectDesa.disabled = true;
+
+    if (!e.target.value) return;
+
+    try {
+      const res = await fetch(`${API_WILAYAH}/regencies/${e.target.value}.json`);
+      const data = await res.json();
+      data.forEach(kota => {
+        const option = document.createElement('option');
+        option.value = kota.id;
+        option.textContent = kota.name;
+        selectKota.appendChild(option);
+      });
+      selectKota.disabled = false;
+    } catch (err) {}
+  });
+
+  selectKota.addEventListener('change', async (e) => {
+    selectKecamatan.innerHTML = '<option value="">Pilih Kecamatan</option>';
+    selectDesa.innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
+    selectKecamatan.disabled = true;
+    selectDesa.disabled = true;
+
+    if (!e.target.value) return;
+
+    try {
+      const res = await fetch(`${API_WILAYAH}/districts/${e.target.value}.json`);
+      const data = await res.json();
+      data.forEach(kec => {
+        const option = document.createElement('option');
+        option.value = kec.id;
+        option.textContent = kec.name;
+        selectKecamatan.appendChild(option);
+      });
+      selectKecamatan.disabled = false;
+    } catch (err) {}
+  });
+
+  selectKecamatan.addEventListener('change', async (e) => {
+    selectDesa.innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
+    selectDesa.disabled = true;
+
+    if (!e.target.value) return;
+
+    try {
+      const res = await fetch(`${API_WILAYAH}/villages/${e.target.value}.json`);
+      const data = await res.json();
+      data.forEach(desa => {
+        const option = document.createElement('option');
+        option.value = desa.id;
+        option.textContent = desa.name;
+        selectDesa.appendChild(option);
+      });
+      selectDesa.disabled = false;
+    } catch (err) {}
+  });
+}
+// -----------------------------
+
 // Form submit
 const form = document.getElementById('checkout-form');
 form?.addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const namaLengkap = document.getElementById('nama-lengkap').value;
-  const alamat = document.getElementById('alamat').value;
+  
+  // Gabungkan form alamat menjadi satu teks
+  if (selectProvinsi?.value && selectKota?.value && selectKecamatan?.value && selectDesa?.value && inputDetail?.value && inputKodePos?.value) {
+    const provText = selectProvinsi.options[selectProvinsi.selectedIndex].text;
+    const kotaText = selectKota.options[selectKota.selectedIndex].text;
+    const kecText = selectKecamatan.options[selectKecamatan.selectedIndex].text;
+    const desaText = selectDesa.options[selectDesa.selectedIndex].text;
+    
+    inputAlamatHidden.value = `${inputDetail.value.trim()}, Kel. ${desaText}, Kec. ${kecText}, ${kotaText}, Provinsi ${provText}, ${inputKodePos.value.trim()}`;
+  } else {
+    inputAlamatHidden.value = ''; // Akan ditolak oleh validasi
+  }
+
+  const alamat = inputAlamatHidden.value;
   const nomorHP = document.getElementById('nomor-hp').value;
 
   // Clear errors

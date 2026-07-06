@@ -105,19 +105,45 @@
               </div>
 
               <!-- Alamat -->
-              <div>
-                <label for="alamat" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              <div class="space-y-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 border-b pb-1 dark:border-gray-700">
                   Alamat Lengkap <span class="text-red-500">*</span>
                 </label>
-                <textarea
-                  id="alamat"
-                  name="alamat"
-                  rows="4"
-                  placeholder="Masukkan alamat lengkap pengiriman (jalan, kelurahan, kecamatan, kota)"
-                  class="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors resize-none"
-                  autocomplete="street-address"
-                ></textarea>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <select id="provinsi" name="provinsi" class="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" required>
+                      <option value="">Pilih Provinsi</option>
+                    </select>
+                  </div>
+                  <div>
+                    <select id="kota" name="kota" class="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" required disabled>
+                      <option value="">Pilih Kota/Kabupaten</option>
+                    </select>
+                  </div>
+                  <div>
+                    <select id="kecamatan" name="kecamatan" class="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" required disabled>
+                      <option value="">Pilih Kecamatan</option>
+                    </select>
+                  </div>
+                  <div>
+                    <select id="desa" name="desa" class="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" required disabled>
+                      <option value="">Pilih Desa/Kelurahan</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div class="md:col-span-2">
+                    <input type="text" id="detail-alamat" name="detail-alamat" placeholder="Detail: Jalan, Gedung, No. Rumah, RT/RW" class="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" required>
+                  </div>
+                  <div>
+                    <input type="text" id="kode-pos" name="kode-pos" placeholder="Kode Pos" class="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" required>
+                  </div>
+                </div>
+                
                 <p id="alamat-error" class="mt-1.5 text-sm text-red-500"></p>
+                <input type="hidden" id="alamat" name="alamat">
               </div>
 
               <!-- Nomor HP -->
