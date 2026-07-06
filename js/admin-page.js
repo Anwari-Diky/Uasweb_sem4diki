@@ -14,16 +14,9 @@ if (!AuthManager.isAdmin()) {
 
 const currentUser = AuthManager.getCurrentUser();
 document.getElementById('user-name').textContent = currentUser.nama;
-document.getElementById('user-name-mobile').textContent = currentUser.nama;
-document.getElementById('admin-link')?.classList.remove('hidden');
-document.getElementById('admin-link-mobile')?.classList.remove('hidden');
 
 document.getElementById('theme-toggle')?.addEventListener('click', () => ThemeManager.toggle());
-document.getElementById('hamburger-btn')?.addEventListener('click', () => {
-  document.getElementById('mobile-menu')?.classList.toggle('hidden');
-});
 document.getElementById('logout-btn')?.addEventListener('click', () => AuthManager.logout());
-document.getElementById('logout-btn-mobile')?.addEventListener('click', () => AuthManager.logout());
 
 async function init() {
   await CartManager.updateCartBadge();
@@ -82,13 +75,13 @@ const tabContents = {
 async function switchTab(activeTab) {
   Object.keys(tabBtns).forEach(tab => {
     if (tab === activeTab) {
-      tabBtns[tab].classList.add('text-blue-600', 'dark:text-blue-400', 'border-blue-600', 'dark:border-blue-400');
-      tabBtns[tab].classList.remove('text-gray-500', 'dark:text-gray-400', 'border-transparent');
-      tabContents[tab].classList.remove('hidden');
+      tabBtns[tab]?.classList.add('text-blue-700', 'bg-blue-50', 'dark:text-blue-400', 'dark:bg-blue-900/30');
+      tabBtns[tab]?.classList.remove('text-gray-600', 'dark:text-gray-400', 'hover:bg-gray-100', 'dark:hover:bg-gray-700');
+      tabContents[tab]?.classList.remove('hidden');
     } else {
-      tabBtns[tab].classList.remove('text-blue-600', 'dark:text-blue-400', 'border-blue-600', 'dark:border-blue-400');
-      tabBtns[tab].classList.add('text-gray-500', 'dark:text-gray-400', 'border-transparent');
-      tabContents[tab].classList.add('hidden');
+      tabBtns[tab]?.classList.remove('text-blue-700', 'bg-blue-50', 'dark:text-blue-400', 'dark:bg-blue-900/30');
+      tabBtns[tab]?.classList.add('text-gray-600', 'dark:text-gray-400', 'hover:bg-gray-100', 'dark:hover:bg-gray-700');
+      tabContents[tab]?.classList.add('hidden');
     }
   });
 
