@@ -7,6 +7,7 @@ import { CartManager } from './cart.js';
 import { WishlistManager } from './wishlist.js';
 import { SearchFilter } from './search.js';
 import { PaginationManager } from './pagination.js';
+import { API } from './api.js';
 
 // Init
 ThemeManager.init();
@@ -71,6 +72,8 @@ CartManager.updateCartBadge();
 // Load products
 async function loadAndRender() {
   ProductManager.renderSkeleton(productGrid, 8);
+  CartManager.updateCartBadge();
+  await loadBanner();
 
   allProducts = await ProductManager.loadProducts();
 
@@ -276,3 +279,19 @@ loadAndRender().then(() => {
     if (product) showProductModal(product);
   }
 });
+
+// Load Banner Function
+async function loadBanner() {
+  try {
+    const res = await API.get('/settings/banner');
+    if (res && res.url) {
+      const heroBg = document.getElementById('hero-bg');
+      if (heroBg) {
+        heroBg.style.backgroundImage = `url('${res.url}')`;
+      }
+    }
+  } catch(e) {
+    console.error('Failed to load banner', e);
+  }
+}
+

@@ -120,10 +120,15 @@
         </nav>
 
         <!-- ===== HERO SECTION ===== -->
-        <section class="bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 dark:from-blue-800 dark:via-blue-900 dark:to-indigo-900 text-white py-16 px-4">
-            <div class="max-w-4xl mx-auto text-center">
-                <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 leading-tight">Temukan Produk Terbaik</h1>
-                <p class="text-blue-100 text-lg mb-8 max-w-xl mx-auto">Belanja mudah, cepat, dan terpercaya. Ribuan produk pilihan tersedia untuk Anda.</p>
+        <section id="hero-section" class="relative overflow-hidden bg-gray-900 text-white py-16 px-4">
+            <!-- Dynamic Background Image -->
+            <div id="hero-bg" class="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-[10000ms] ease-out scale-100 banner-zoom" style="background-image: url('https://placehold.co/1920x600?text=ShopKu+Store');"></div>
+            <!-- Dark Overlay Gradient -->
+            <div class="absolute inset-0 bg-black/40 bg-gradient-to-t from-gray-900/90 via-gray-900/40 to-transparent z-0"></div>
+            
+            <div class="max-w-4xl mx-auto text-center relative z-10">
+                <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 leading-tight drop-shadow-md">Temukan Produk Terbaik</h1>
+                <p class="text-gray-200 text-lg mb-8 max-w-xl mx-auto drop-shadow">Belanja mudah, cepat, dan terpercaya. Ribuan produk pilihan tersedia untuk Anda.</p>
                 <!-- Hero Search Bar -->
                 <div class="relative max-w-xl mx-auto">
                     <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

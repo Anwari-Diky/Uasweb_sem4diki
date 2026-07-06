@@ -55,7 +55,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    Pengaturan Modul
+                    Pengaturan Toko
                 </button>
             </div>
 
@@ -141,19 +141,45 @@
                         </div>
                     </div>
 
-                    <!-- Tab Modul Lainnya -->
+                    <!-- Tab Pengaturan Toko -->
                     <div id="tab-modul" class="tab-content hidden">
                         <div class="mb-6">
-                            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Modul Ekstra</h2>
+                            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Pengaturan Toko</h2>
+                            <p class="text-gray-500 text-sm mt-1">Atur tampilan dan informasi toko Anda di sini.</p>
                         </div>
-                        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 flex flex-col items-center justify-center text-center py-20">
-                            <div class="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-5">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                                </svg>
-                            </div>
-                            <h3 class="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">Modul Sedang Dikembangkan</h3>
-                            <p class="text-gray-500 dark:text-gray-400 max-w-md">Fitur analitik, laporan keuangan, dan pengaturan toko akan tersedia pada update besar berikutnya.</p>
+                        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 max-w-2xl">
+                            <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Banner Halaman Utama</h3>
+                            
+                            <form id="banner-form" class="space-y-4">
+                                <div class="w-full aspect-[21/9] bg-gray-100 dark:bg-gray-900 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center relative overflow-hidden group">
+                                    <img id="banner-preview" src="" alt="Banner Preview" class="absolute inset-0 w-full h-full object-cover hidden">
+                                    <div id="banner-placeholder" class="text-center z-10 p-4 transition-opacity group-hover:opacity-100">
+                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                        <div class="flex text-sm text-gray-600 dark:text-gray-400 justify-center mt-2">
+                                            <label for="banner-upload" class="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 focus-within:outline-none px-1">
+                                                <span>Pilih Gambar Banner</span>
+                                                <input id="banner-upload" name="banner" type="file" accept="image/*" class="sr-only">
+                                            </label>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1">Rasio optimal 21:9 atau resolusi HD</p>
+                                    </div>
+                                    <div id="banner-overlay" class="absolute inset-0 bg-black/50 hidden flex-col items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <label for="banner-upload" class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm">
+                                            Ganti Gambar
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="flex justify-end pt-2">
+                                    <button type="submit" id="save-banner-btn" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                        </svg>
+                                        Simpan Banner
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
 

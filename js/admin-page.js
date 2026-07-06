@@ -93,3 +93,84 @@ async function switchTab(activeTab) {
 tabBtns.produk?.addEventListener('click', () => switchTab('produk'));
 tabBtns.pesanan?.addEventListener('click', () => switchTab('pesanan'));
 tabBtns.modul?.addEventListener('click', () => switchTab('modul'));
+
+// --- Banner Upload Logic ---
+import { API } from './api.js';
+
+const bannerForm = document.getElementById('banner-form');
+const bannerInput = document.getElementById('banner-upload');
+const bannerPreview = document.getElementById('banner-preview');
+const bannerPlaceholder = document.getElementById('banner-placeholder');
+const bannerOverlay = document.getElementById('banner-overlay');
+const saveBannerBtn = document.getElementById('save-banner-btn');
+
+async function loadCurrentBanner() {
+  try {
+    const res = await API.get('/settings/banner');
+    if (res && res.url) {
+      bannerPreview.src = res.url;
+      bannerPreview.classList.remove('hidden');
+      bannerPlaceholder.classList.add('hidden');
+      bannerOverlay.classList.remove('hidden');
+      bannerOverlay.classList.add('flex');
+    }
+  } catch (err) {
+    console.error('Failed to load banner:', err);
+  }
+}
+
+bannerInput?.addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      bannerPreview.src = e.target.result;
+      bannerPreview.classList.remove('hidden');
+      bannerPlaceholder.classList.add('hidden');
+      bannerOverlay.classList.remove('hidden');
+      bannerOverlay.classList.add('flex');
+    }
+    reader.readAsDataURL(file);
+  }
+});
+
+bannerForm?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const file = bannerInput.files[0];
+  if (!file && !bannerPreview.src) {
+    Toast.error('Pilih gambar terlebih dahulu!');
+    return;
+  }
+  
+  if (!file) {
+    Toast.success('Tidak ada perubahan gambar.');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('banner', file);
+
+  try {
+    saveBannerBtn.disabled = true;
+    saveBannerBtn.innerHTML = 'Menyimpan...';
+    
+    await API.post('/settings/banner', formData);
+    Toast.success('Banner berhasil diperbarui!');
+    
+  } catch (err) {
+    Toast.error(err.message || 'Gagal menyimpan banner');
+  } finally {
+    saveBannerBtn.disabled = false;
+    saveBannerBtn.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+      </svg>
+      Simpan Banner
+    `;
+  }
+});
+
+// Load banner when modul tab is opened
+tabBtns.modul?.addEventListener('click', () => {
+    loadCurrentBanner();
+});
